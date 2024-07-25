@@ -1,34 +1,25 @@
 pipeline {
     agent any
 
-    environment {
-        // Set environment variables if needed
+    tools {
+        // Install the Maven version configured as "M3" and add it to the path.
+        maven "jenkin_maven"
     }
 
+
     stages {
-        stage('Checkout') {
+        stage('Build') {
             steps {
                 git url: ' https://github.com/Snehal8340/TestDemo1.git', branch: 'main'
-            }
-        }
-        
-        stage('Install Dependencies') {
-            steps {
-                sh 'mvn install'
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
                 sh 'mvn test'
             }
         }
     }
 
     post {
-        always {
-            archiveArtifacts artifacts: '**/target/*.json', allowEmptyArchive: true
-            junit 'target/cucumber-reports/*.xml'
+        success {
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archiveArtifacts 'target/*.jar'
         }
     }
 }
