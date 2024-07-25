@@ -1,24 +1,34 @@
 pipeline {
     agent any
 
-    tools {
-        maven "jenkin_maven"
+    environment {
+        // Set environment variables if needed
     }
 
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-
-                git 'https://github.com/Snehal8340/TestDemo1.git'
-                bat "mvn -Dmaven.test.failure.ignore=true clean package"
+                git url: ' https://github.com/Snehal8340/TestDemo1.git', branch: 'main'
             }
-
-            post {
-                success {
-                    junit '**/target/surefire-reports/TEST-*.xml'
-                    archiveArtifacts 'target/*.jar'
-                }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                sh 'mvn install'
             }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: '**/target/*.json', allowEmptyArchive: true
+            junit 'target/cucumber-reports/*.xml'
         }
     }
 }
