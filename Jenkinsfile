@@ -1,25 +1,50 @@
 pipeline {
     agent any
 
-    tools {
-        // Install the Maven version configured as "M3" and add it to the path.
-        maven "jenkin_maven"
+    environment {
+        // Set any environment variables if needed
+        jenkin_maven = tool name: 'Maven', type: 'hudson.tasks.Maven$MavenInstallation'
     }
 
-
     stages {
+        stage('Checkout') {
+            steps {
+                // Checkout code from GitHub
+                git url: 'https://github.com/Snehal8340/TestDemo1.git', branch: 'main'
+            }
+        }
+        
         stage('Build') {
             steps {
-                git url: ' https://github.com/Snehal8340/TestDemo1.git', branch: 'main'
-                sh 'mvn test'
+                // Run Maven clean and install
+                withMaven(maven: 'Maven') {
+                    sh "${jenkin_maven}/bin/mvn clean install"
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Run tests
+                withMaven(maven: 'Maven') {
+                    sh "${jenkin_maven}/bin/mvn test"
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                // Deploy the application or artifacts if needed
+                // Example: sh "${jenkin_maven}/bin/mvn deploy"
             }
         }
     }
 
     post {
-        success {
-                    junit '**/target/surefire-reports/TEST-*.xml'
-                    archiveArtifacts 'target/*.jar'
+        always {
+            // Archive artifacts, publish test results, etc.
+            archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+            junit 'target/surefire-reports/*.xml'
         }
     }
 }
