@@ -1,50 +1,25 @@
-pipeline {
-    agent any
-
-    environment {
-        // Set any environment variables if needed
-        jenkin_maven = tool name: 'Maven', type: 'hudson.tasks.Maven$MavenInstallation'
+node {
+    def mvnHome
+    stage('Preparation') { // for display purposes
+        // Get some code from a GitHub repository
+        git 'https://github.com/Snehal8340/TestDemo1.git'
+        // Get the Maven tool.
+        // ** NOTE: This 'M3' Maven tool must be configured
+        // **       in the global configuration.
+        mvnHome = tool 'M3'
     }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                // Checkout code from GitHub
-                git url: 'https://github.com/Snehal8340/TestDemo1.git', branch: 'main'
-            }
-        }
-        stage('Build') {
-            steps {
-                // Run Maven clean and install
-                withMaven(maven: 'Maven') {
-                    sh "${jenkin_maven}/bin/mvn clean install"
-                }
+    stage('Build') {
+        // Run the maven build
+        withEnv(["MVN_HOME=$mvnHome"]) {
+            if (isUnix()) {
+                sh '"$MVN_HOME/bin/mvn" -Dmaven.test.failure.ignore clean package'
+            } else {
+                bat(/"%MVN_HOME%\bin\mvn" -Dmaven.test.failure.ignore clean package/)
             }
         }
     }
-}
-        stage('Test') {
-            steps {
-                // Run tests
-                withMaven(maven: 'Maven') {
-                    sh "${jenkin_maven}/bin/mvn test"
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                // Deploy the application or artifacts if needed
-                // Example: sh "${jenkin_maven}/bin/mvn deploy"
-            }
-        }
-    }
-
-    post {
-        always {
-            // Archive artifacts, publish test results, etc.
-            archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
-            junit 'target/surefire-reports/*.xml'
-        }
+    stage('Results') {
+        junit '**/target/surefire-reports/TEST-*.xml'
+        archiveArtifacts 'target/*.jar'
     }
 }
