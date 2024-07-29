@@ -13,7 +13,6 @@ pipeline {
                 git url: 'https://github.com/Snehal8340/TestDemo1.git', branch: 'main'
             }
         }
-        
         stage('Build') {
             steps {
                 // Run Maven clean and install
@@ -23,7 +22,7 @@ pipeline {
             }
         }
     }
-
+}
         stage('Test') {
             steps {
                 // Run tests
